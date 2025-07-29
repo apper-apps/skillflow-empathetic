@@ -1,0 +1,62 @@
+[
+  {
+    "Id": 1,
+    "title": "강점 찾기 기초: 나만의 글쓰기 DNA 발견하기",
+    "description": "개인의 독특한 강점과 전문성을 발견하고 글쓰기에 활용하는 방법을 학습합니다.",
+    "requiredRole": "Free_User",
+    "duration": 25,
+    "videoId": "sample_video_1",
+    "progress": 75,
+    "category": "강점찾기"
+  },
+  {
+    "Id": 2,
+    "title": "콘셉트 설계 마스터클래스",
+    "description": "강점을 바탕으로 독자에게 가치를 전달하는 명확한 콘셉트를 설계하는 고급 기법을 배웁니다.",
+    "requiredRole": "Premium",
+    "duration": 45,
+    "videoId": "sample_video_2",
+    "progress": 60,
+    "category": "콘셉트설계"
+  },
+  {
+    "Id": 3,
+    "title": "시나리오 작성의 과학: 독자 행동 유도법",
+    "description": "체계적인 글쓰기 프레임워크를 활용하여 독자의 관심을 끌고 행동을 유도하는 시나리오를 작성합니다.",
+    "requiredRole": "Premium",
+    "duration": 55,
+    "videoId": "sample_video_3",
+    "progress": 45,
+    "category": "글시나리오"
+  },
+  {
+    "Id": 4,
+    "title": "수익화 실행 전략: 첫 달 100만원 만들기",
+    "description": "완성된 콘텐츠를 다양한 플랫폼에 배치하고 지속 가능한 수익 구조를 만드는 실전 전략을 학습합니다.",
+    "requiredRole": "Master",
+    "duration": 65,
+    "videoId": "sample_video_4",
+    "progress": 30,
+    "category": "수익화실행"
+  },
+  {
+    "Id": 5,
+    "title": "플랫폼별 최적화 전략",
+    "description": "네이버 블로그, 티스토리, 브런치, 유튜브 등 각 플랫폼의 특성에 맞는 콘텐츠 최적화 방법을 배웁니다.",
+    "requiredRole": "Premium",
+    "duration": 40,
+    "videoId": "sample_video_5",
+    "progress": 20,
+    "category": "플랫폼활용"
+  },
+  {
+    "Id": 6,
+    "title": "SEO 최적화로 유기적 트래픽 늘리기",
+    "description": "검색엔진 최적화 기법을 활용하여 글의 노출도를 높이고 자연스러운 독자 유입을 만드는 방법을 학습합니다.",
+    "requiredRole": "Master",
+    "duration": 50,
+    "videoId": "sample_video_6",
+    "progress": 10,
+    "category": "마케팅"
+  }
+]
