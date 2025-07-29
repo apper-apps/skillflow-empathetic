@@ -17,7 +17,7 @@ import DashboardPage from "@/components/pages/DashboardPage";
 import CoursesPage from "@/components/pages/CoursesPage";
 import AdminPage from "@/components/pages/AdminPage";
 import LandingPage from "@/components/pages/LandingPage";
-
+import SecondLandingPage from "@/components/pages/SecondLandingPage";
 // Create auth context
 export const AuthContext = createContext(null);
 
@@ -130,8 +130,9 @@ function AppContent() {
           <Route path="/callback" element={<Callback />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="/prompt-password/:appId/:emailAddress/:provider" element={<PromptPassword />} />
-          <Route path="/reset-password/:appId/:fields" element={<ResetPassword />} />
+<Route path="/reset-password/:appId/:fields" element={<ResetPassword />} />
           <Route path="/landing" element={<LandingPage />} />
+          <Route path="/landing/second" element={<SecondLandingPage />} />
           <Route path="/dashboard" element={
             <Layout>
               <DashboardPage />

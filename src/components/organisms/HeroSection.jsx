@@ -1,8 +1,15 @@
 import { motion } from "framer-motion";
-import Button from "@/components/atoms/Button";
+import { useNavigate } from "react-router-dom";
+import React from "react";
 import ApperIcon from "@/components/ApperIcon";
-
+import Button from "@/components/atoms/Button";
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const handleFreeStart = () => {
+    navigate('/landing/second');
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-primary to-secondary">
       <div className="absolute inset-0 bg-black/20" />
@@ -46,15 +53,15 @@ const HeroSection = () => {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
           >
-            <Button
+<Button
               variant="accent"
               size="xl"
+              onClick={handleFreeStart}
               className="text-lg px-8 py-4 hover-glow shadow-2xl"
             >
               <ApperIcon name="Zap" className="w-6 h-6 mr-3" />
               무료 시작
             </Button>
-            
             <Button
               variant="outline"
               size="xl"
