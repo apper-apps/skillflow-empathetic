@@ -1,11 +1,49 @@
-import dashboardData from "@/services/mockData/dashboardData.json";
+import React from "react";
 import { getUserBadges } from "@/services/api/badgeService";
+import Error from "@/components/ui/Error";
+
+const { ApperClient } = window.ApperSDK;
+
+const apperClient = new ApperClient({
+  apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+  apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+});
 
 export const getDashboardData = async () => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  return [...dashboardData];
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "progress" } },
+        { field: { Name: "category" } }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "ASC" }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('dashboard_item', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return response.data || [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error fetching dashboard data:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error fetching dashboard data:", error.message);
+      throw error;
+    }
+  }
 };
 
 export const getDashboardById = async (id) => {
@@ -13,12 +51,41 @@ export const getDashboardById = async (id) => {
     throw new Error('ID must be a positive integer');
   }
   
-  await new Promise(resolve => setTimeout(resolve, 200));
-  const item = dashboardData.find(d => d.Id === id);
-  if (!item) {
-    throw new Error(`Dashboard item with ID ${id} not found`);
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "progress" } },
+        { field: { Name: "category" } }
+      ]
+    };
+    
+    const response = await apperClient.getRecordById('dashboard_item', id, params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (!response.data) {
+      throw new Error(`Dashboard item with ID ${id} not found`);
+    }
+    
+    return response.data;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error(`Error fetching dashboard item with ID ${id}:`, error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error(`Error fetching dashboard item with ID ${id}:`, error.message);
+      throw error;
+    }
   }
-  return { ...item };
 };
 
 export const updateProgress = async (id, progress) => {
@@ -29,25 +96,58 @@ export const updateProgress = async (id, progress) => {
     throw new Error('Progress must be a number between 0 and 100');
   }
   
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const index = dashboardData.findIndex(d => d.Id === id);
-  if (index === -1) {
-    throw new Error(`Dashboard item with ID ${id} not found`);
+  try {
+    const params = {
+      records: [{
+        Id: id,
+        progress: progress
+      }]
+    };
+    
+    const response = await apperClient.updateRecord('dashboard_item', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedUpdates = response.results.filter(result => !result.success);
+      
+      if (failedUpdates.length > 0) {
+        console.error(`Failed to update dashboard progress ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+        throw new Error(failedUpdates[0].message || 'Update failed');
+      }
+      
+      const successfulUpdate = response.results.find(result => result.success);
+      return successfulUpdate ? successfulUpdate.data : null;
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error updating dashboard progress:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error updating dashboard progress:", error.message);
+      throw error;
+    }
   }
-  
-  dashboardData[index] = { ...dashboardData[index], progress };
-  return { ...dashboardData[index] };
 };
 
 export const getDashboardWithBadges = async (userId = 1) => {
-  const [dashboardItems, userBadges] = await Promise.all([
-    getDashboardData(),
-    getUserBadges(userId)
-  ]);
-  
-  return {
-    dashboardItems,
-    userBadges
-  };
+  try {
+    const [dashboardItems, userBadges] = await Promise.all([
+      getDashboardData(),
+      getUserBadges(userId)
+    ]);
+    
+    return {
+      dashboardItems,
+      userBadges
+    };
+  } catch (error) {
+    console.error("Error fetching dashboard with badges:", error.message);
+throw error;
+  }
 };

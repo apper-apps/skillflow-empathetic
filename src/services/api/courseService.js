@@ -1,139 +1,469 @@
-import coursesData from "@/services/mockData/coursesData.json";
+const { ApperClient } = window.ApperSDK;
+
+const apperClient = new ApperClient({
+  apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+  apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+});
 
 export const getAllCourses = async () => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 400));
-  
-  return [...coursesData];
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "category" } },
+        { field: { Name: "level" } },
+        { field: { Name: "students" } },
+        { field: { Name: "rating" } }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "ASC" }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return response.data || [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error fetching courses:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error fetching courses:", error.message);
+      throw error;
+    }
+  }
 };
 
 export const getCourseById = async (id) => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const course = coursesData.find(course => course.Id === parseInt(id));
-  if (!course) {
-    throw new Error("Course not found");
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "category" } },
+        { field: { Name: "level" } },
+        { field: { Name: "students" } },
+        { field: { Name: "rating" } }
+      ]
+    };
+    
+    const response = await apperClient.getRecordById('course', parseInt(id), params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (!response.data) {
+      throw new Error("Course not found");
+    }
+    
+    return response.data;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error(`Error fetching course with ID ${id}:`, error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error(`Error fetching course with ID ${id}:`, error.message);
+      throw error;
+    }
   }
-  
-  return { ...course };
 };
 
 export const getCoursesByRole = async (role) => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  if (role === "All") {
-    return [...coursesData];
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "category" } },
+        { field: { Name: "level" } },
+        { field: { Name: "students" } },
+        { field: { Name: "rating" } }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "ASC" }
+      ]
+    };
+    
+    if (role !== "All") {
+      params.where = [
+        {
+          FieldName: "requiredRole",
+          Operator: "EqualTo",
+          Values: [role]
+        }
+      ];
+    }
+    
+    const response = await apperClient.fetchRecords('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return response.data || [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error(`Error fetching courses by role ${role}:`, error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error(`Error fetching courses by role ${role}:`, error.message);
+      throw error;
+    }
   }
-  
-  return coursesData.filter(course => course.requiredRole === role);
 };
 
 export const createCourse = async (courseData) => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const maxId = Math.max(...coursesData.map(course => course.Id));
-  const newCourse = {
-    Id: maxId + 1,
-    ...courseData,
-    students: 0,
-    rating: 5.0
-  };
-  
-  coursesData.push(newCourse);
-  return { ...newCourse };
+  try {
+    const params = {
+      records: [{
+        Name: courseData.title,
+        title: courseData.title,
+        description: courseData.description,
+        requiredRole: courseData.requiredRole,
+        duration: courseData.duration,
+        videoId: courseData.videoId,
+        category: courseData.category,
+        level: courseData.level || "초급",
+        students: 0,
+        rating: 5
+      }]
+    };
+    
+    const response = await apperClient.createRecord('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedCreations = response.results.filter(result => !result.success);
+      
+      if (failedCreations.length > 0) {
+        console.error(`Failed to create courses ${failedCreations.length} records:${JSON.stringify(failedCreations)}`);
+        
+        failedCreations.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      const successfulCreation = response.results.find(result => result.success);
+      return successfulCreation ? successfulCreation.data : null;
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error creating course:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error creating course:", error.message);
+      throw error;
+    }
+  }
 };
 
 export const updateCourse = async (id, updates) => {
-  await new Promise(resolve => setTimeout(resolve, 400));
-  
-  const courseIndex = coursesData.findIndex(course => course.Id === parseInt(id));
-  if (courseIndex === -1) {
-    throw new Error("Course not found");
+  try {
+    const params = {
+      records: [{
+        Id: parseInt(id),
+        ...(updates.title && { title: updates.title, Name: updates.title }),
+        ...(updates.description && { description: updates.description }),
+        ...(updates.requiredRole && { requiredRole: updates.requiredRole }),
+        ...(updates.duration !== undefined && { duration: updates.duration }),
+        ...(updates.videoId && { videoId: updates.videoId }),
+        ...(updates.category && { category: updates.category }),
+        ...(updates.level && { level: updates.level }),
+        ...(updates.students !== undefined && { students: updates.students }),
+        ...(updates.rating !== undefined && { rating: updates.rating })
+      }]
+    };
+    
+    const response = await apperClient.updateRecord('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedUpdates = response.results.filter(result => !result.success);
+      
+      if (failedUpdates.length > 0) {
+        console.error(`Failed to update courses ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+        throw new Error(failedUpdates[0].message || 'Update failed');
+      }
+      
+      const successfulUpdate = response.results.find(result => result.success);
+      return successfulUpdate ? successfulUpdate.data : null;
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error updating course:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error updating course:", error.message);
+      throw error;
+    }
   }
-  
-  coursesData[courseIndex] = {
-    ...coursesData[courseIndex],
-    ...updates
-  };
-  
-  return { ...coursesData[courseIndex] };
 };
 
 export const deleteCourse = async (id) => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const courseIndex = coursesData.findIndex(course => course.Id === parseInt(id));
-  if (courseIndex === -1) {
-    throw new Error("Course not found");
+  try {
+    const params = {
+      RecordIds: [parseInt(id)]
+    };
+    
+    const response = await apperClient.deleteRecord('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedDeletions = response.results.filter(result => !result.success);
+      
+      if (failedDeletions.length > 0) {
+        console.error(`Failed to delete courses ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+        throw new Error(failedDeletions[0].message || 'Delete failed');
+      }
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error deleting course:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error deleting course:", error.message);
+      throw error;
+    }
   }
-  
-const deletedCourse = { ...coursesData[courseIndex] };
-  coursesData.splice(courseIndex, 1);
-  
-  return deletedCourse;
 };
 
 // Series navigation functions
 export const getNextLesson = async (currentCourseId, category) => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const currentCourse = coursesData.find(course => course.Id === parseInt(currentCourseId));
-  if (!currentCourse) return null;
-  
-  // Get courses in the same category, sorted by Id
-  const seriesCourses = coursesData
-    .filter(course => course.category === category)
-    .sort((a, b) => a.Id - b.Id);
-  
-  const currentIndex = seriesCourses.findIndex(course => course.Id === parseInt(currentCourseId));
-  const nextCourse = seriesCourses[currentIndex + 1];
-  
-  return nextCourse ? { ...nextCourse } : null;
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "category" } },
+        { field: { Name: "level" } },
+        { field: { Name: "students" } },
+        { field: { Name: "rating" } }
+      ],
+      where: [
+        {
+          FieldName: "category",
+          Operator: "EqualTo",
+          Values: [category]
+        },
+        {
+          FieldName: "Id",
+          Operator: "GreaterThan",
+          Values: [parseInt(currentCourseId)]
+        }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "ASC" }
+      ],
+      pagingInfo: {
+        limit: 1,
+        offset: 0
+      }
+    };
+    
+    const response = await apperClient.fetchRecords('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      return null;
+    }
+    
+    return response.data?.[0] || null;
+  } catch (error) {
+    console.error("Error fetching next lesson:", error.message);
+    return null;
+  }
 };
 
 export const getPreviousLesson = async (currentCourseId, category) => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const currentCourse = coursesData.find(course => course.Id === parseInt(currentCourseId));
-  if (!currentCourse) return null;
-  
-  // Get courses in the same category, sorted by Id
-  const seriesCourses = coursesData
-    .filter(course => course.category === category)
-    .sort((a, b) => a.Id - b.Id);
-  
-  const currentIndex = seriesCourses.findIndex(course => course.Id === parseInt(currentCourseId));
-  const previousCourse = seriesCourses[currentIndex - 1];
-  
-  return previousCourse ? { ...previousCourse } : null;
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "category" } },
+        { field: { Name: "level" } },
+        { field: { Name: "students" } },
+        { field: { Name: "rating" } }
+      ],
+      where: [
+        {
+          FieldName: "category",
+          Operator: "EqualTo",
+          Values: [category]
+        },
+        {
+          FieldName: "Id",
+          Operator: "LessThan",
+          Values: [parseInt(currentCourseId)]
+        }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "DESC" }
+      ],
+      pagingInfo: {
+        limit: 1,
+        offset: 0
+      }
+    };
+    
+    const response = await apperClient.fetchRecords('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      return null;
+    }
+    
+    return response.data?.[0] || null;
+  } catch (error) {
+    console.error("Error fetching previous lesson:", error.message);
+    return null;
+  }
 };
 
 export const getSeriesProgress = async (category, completedLessonIds = []) => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const seriesCourses = coursesData
-    .filter(course => course.category === category)
-    .sort((a, b) => a.Id - b.Id);
-  
-  const totalLessons = seriesCourses.length;
-  const completedLessons = completedLessonIds.length;
-  const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-  
-  return {
-    category,
-    totalLessons,
-    completedLessons,
-    progressPercentage,
-    nextLesson: seriesCourses.find(course => !completedLessonIds.includes(course.Id)),
-    courses: seriesCourses
-  };
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } }
+      ],
+      where: [
+        {
+          FieldName: "category",
+          Operator: "EqualTo",
+          Values: [category]
+        }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "ASC" }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    const seriesCourses = response.data || [];
+    const totalLessons = seriesCourses.length;
+    const completedLessons = completedLessonIds.length;
+    const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    
+    return {
+      category,
+      totalLessons,
+      completedLessons,
+      progressPercentage,
+      nextLesson: seriesCourses.find(course => !completedLessonIds.includes(course.Id)),
+      courses: seriesCourses
+    };
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error(`Error fetching series progress for ${category}:`, error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error(`Error fetching series progress for ${category}:`, error.message);
+      throw error;
+    }
+  }
 };
 
 export const getCoursesBySeries = async (category) => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  return coursesData
-    .filter(course => course.category === category)
-    .sort((a, b) => a.Id - b.Id)
-    .map(course => ({ ...course }));
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "category" } },
+        { field: { Name: "level" } },
+        { field: { Name: "students" } },
+        { field: { Name: "rating" } }
+      ],
+      where: [
+        {
+          FieldName: "category",
+          Operator: "EqualTo",
+          Values: [category]
+        }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "ASC" }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('course', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return response.data || [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error(`Error fetching courses by series ${category}:`, error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error(`Error fetching courses by series ${category}:`, error.message);
+      throw error;
+    }
+  }
 };

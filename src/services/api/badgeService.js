@@ -1,10 +1,42 @@
-import badgesData from "@/services/mockData/badgesData.json";
-import userBadgesData from "@/services/mockData/userBadgesData.json";
+const { ApperClient } = window.ApperSDK;
+
+const apperClient = new ApperClient({
+  apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+  apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+});
 
 // Badge management functions
 export const getAllBadges = async () => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  return [...badgesData];
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "icon" } },
+        { field: { Name: "criteria" } },
+        { field: { Name: "resetCycle" } }
+      ],
+      orderBy: [
+        { fieldName: "Id", sorttype: "ASC" }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return response.data || [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error fetching badges:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error fetching badges:", error.message);
+      throw error;
+    }
+  }
 };
 
 export const getBadgeById = async (id) => {
@@ -12,28 +44,85 @@ export const getBadgeById = async (id) => {
     throw new Error('ID must be a positive integer');
   }
   
-  await new Promise(resolve => setTimeout(resolve, 200));
-  const badge = badgesData.find(b => b.Id === id);
-  if (!badge) {
-    throw new Error(`Badge with ID ${id} not found`);
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "icon" } },
+        { field: { Name: "criteria" } },
+        { field: { Name: "resetCycle" } }
+      ]
+    };
+    
+    const response = await apperClient.getRecordById('badge', id, params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (!response.data) {
+      throw new Error(`Badge with ID ${id} not found`);
+    }
+    
+    return response.data;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error(`Error fetching badge with ID ${id}:`, error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error(`Error fetching badge with ID ${id}:`, error.message);
+      throw error;
+    }
   }
-  return { ...badge };
 };
 
 export const createBadge = async (badgeData) => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const newId = Math.max(...badgesData.map(b => b.Id), 0) + 1;
-  const newBadge = {
-    Id: newId,
-    name: badgeData.name,
-    icon: badgeData.icon,
-    criteria: badgeData.criteria,
-    resetCycle: badgeData.resetCycle || 'none'
-  };
-  
-  badgesData.push(newBadge);
-  return { ...newBadge };
+  try {
+    const params = {
+      records: [{
+        Name: badgeData.name,
+        icon: badgeData.icon,
+        criteria: badgeData.criteria,
+        resetCycle: badgeData.resetCycle || 'none'
+      }]
+    };
+    
+    const response = await apperClient.createRecord('badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedCreations = response.results.filter(result => !result.success);
+      
+      if (failedCreations.length > 0) {
+        console.error(`Failed to create badges ${failedCreations.length} records:${JSON.stringify(failedCreations)}`);
+        
+        failedCreations.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      const successfulCreation = response.results.find(result => result.success);
+      return successfulCreation ? successfulCreation.data : null;
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error creating badge:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error creating badge:", error.message);
+      throw error;
+    }
+  }
 };
 
 export const updateBadge = async (id, updateData) => {
@@ -41,15 +130,46 @@ export const updateBadge = async (id, updateData) => {
     throw new Error('ID must be a positive integer');
   }
   
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const index = badgesData.findIndex(b => b.Id === id);
-  if (index === -1) {
-    throw new Error(`Badge with ID ${id} not found`);
+  try {
+    const params = {
+      records: [{
+        Id: id,
+        ...(updateData.name && { Name: updateData.name }),
+        ...(updateData.icon && { icon: updateData.icon }),
+        ...(updateData.criteria && { criteria: updateData.criteria }),
+        ...(updateData.resetCycle && { resetCycle: updateData.resetCycle })
+      }]
+    };
+    
+    const response = await apperClient.updateRecord('badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedUpdates = response.results.filter(result => !result.success);
+      
+      if (failedUpdates.length > 0) {
+        console.error(`Failed to update badges ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+        throw new Error(failedUpdates[0].message || 'Update failed');
+      }
+      
+      const successfulUpdate = response.results.find(result => result.success);
+      return successfulUpdate ? successfulUpdate.data : null;
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error updating badge:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error updating badge:", error.message);
+      throw error;
+    }
   }
-  
-  badgesData[index] = { ...badgesData[index], ...updateData, Id: id };
-  return { ...badgesData[index] };
 };
 
 export const deleteBadge = async (id) => {
@@ -57,34 +177,105 @@ export const deleteBadge = async (id) => {
     throw new Error('ID must be a positive integer');
   }
   
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const index = badgesData.findIndex(b => b.Id === id);
-  if (index === -1) {
-    throw new Error(`Badge with ID ${id} not found`);
+  try {
+    const params = {
+      RecordIds: [id]
+    };
+    
+    const response = await apperClient.deleteRecord('badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedDeletions = response.results.filter(result => !result.success);
+      
+      if (failedDeletions.length > 0) {
+        console.error(`Failed to delete badges ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+        throw new Error(failedDeletions[0].message || 'Delete failed');
+      }
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error deleting badge:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error deleting badge:", error.message);
+      throw error;
+    }
   }
-  
-  badgesData.splice(index, 1);
-  return true;
 };
 
 // User badge management functions
 export const getUserBadges = async (userId = 1) => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const userBadges = userBadgesData
-    .filter(ub => ub.userId === userId)
-    .map(ub => {
-      const badge = badgesData.find(b => b.Id === ub.badgeId);
-      return {
-        ...ub,
-        badge: badge ? { ...badge } : null
-      };
-    })
-    .filter(ub => ub.badge !== null)
-    .sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt));
-  
-  return userBadges;
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "earnedAt" } },
+        { 
+          field: { name: "userId" },
+          referenceField: { field: { Name: "Name" } }
+        },
+        { 
+          field: { name: "badgeId" },
+          referenceField: { field: { Name: "Name" } }
+        }
+      ],
+      where: [
+        {
+          FieldName: "userId",
+          Operator: "EqualTo",
+          Values: [userId]
+        }
+      ],
+      orderBy: [
+        { fieldName: "earnedAt", sorttype: "DESC" }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('user_badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    // Get badge details for each user badge
+    const userBadges = response.data || [];
+    const enrichedBadges = await Promise.all(
+      userBadges.map(async (userBadge) => {
+        try {
+          const badgeId = userBadge.badgeId?.Id || userBadge.badgeId;
+          if (badgeId) {
+            const badge = await getBadgeById(parseInt(badgeId));
+            return {
+              ...userBadge,
+              badge: badge
+            };
+          }
+        } catch (error) {
+          console.error("Error fetching badge details:", error);
+        }
+        return userBadge;
+      })
+    );
+    
+    return enrichedBadges.filter(ub => ub.badge);
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error fetching user badges:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error fetching user badges:", error.message);
+      throw error;
+    }
+  }
 };
 
 export const awardBadge = async (userId, badgeId) => {
@@ -95,34 +286,55 @@ export const awardBadge = async (userId, badgeId) => {
     throw new Error('Badge ID must be a positive integer');
   }
   
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  // Check if badge exists
-  const badge = badgesData.find(b => b.Id === badgeId);
-  if (!badge) {
-    throw new Error(`Badge with ID ${badgeId} not found`);
+  try {
+    // Check if badge exists
+    const badge = await getBadgeById(badgeId);
+    if (!badge) {
+      throw new Error(`Badge with ID ${badgeId} not found`);
+    }
+    
+    const params = {
+      records: [{
+        userId: userId,
+        badgeId: badgeId,
+        earnedAt: new Date().toISOString()
+      }]
+    };
+    
+    const response = await apperClient.createRecord('user_badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedCreations = response.results.filter(result => !result.success);
+      
+      if (failedCreations.length > 0) {
+        console.error(`Failed to award badges ${failedCreations.length} records:${JSON.stringify(failedCreations)}`);
+        throw new Error(failedCreations[0].message || 'Award failed');
+      }
+      
+      const successfulCreation = response.results.find(result => result.success);
+      if (successfulCreation) {
+        return {
+          ...successfulCreation.data,
+          badge: badge
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error awarding badge:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error awarding badge:", error.message);
+      throw error;
+    }
   }
-  
-  // Check if user already has this badge
-  const existingUserBadge = userBadgesData.find(
-    ub => ub.userId === userId && ub.badgeId === badgeId
-  );
-  
-  if (existingUserBadge) {
-    throw new Error('User already has this badge');
-  }
-  
-  const newUserBadge = {
-    userId,
-    badgeId,
-    earnedAt: new Date().toISOString()
-  };
-  
-  userBadgesData.push(newUserBadge);
-  return {
-    ...newUserBadge,
-    badge: { ...badge }
-  };
 };
 
 export const revokeBadge = async (userId, badgeId) => {
@@ -133,35 +345,131 @@ export const revokeBadge = async (userId, badgeId) => {
     throw new Error('Badge ID must be a positive integer');
   }
   
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const index = userBadgesData.findIndex(
-    ub => ub.userId === userId && ub.badgeId === badgeId
-  );
-  
-  if (index === -1) {
-    throw new Error('User badge not found');
+  try {
+    // Find the user badge record
+    const userBadgesParams = {
+      fields: [
+        { field: { Name: "Id" } }
+      ],
+      where: [
+        {
+          FieldName: "userId",
+          Operator: "EqualTo",
+          Values: [userId]
+        },
+        {
+          FieldName: "badgeId",
+          Operator: "EqualTo",
+          Values: [badgeId]
+        }
+      ]
+    };
+    
+    const userBadgesResponse = await apperClient.fetchRecords('user_badge', userBadgesParams);
+    
+    if (!userBadgesResponse.success || !userBadgesResponse.data?.length) {
+      throw new Error('User badge not found');
+    }
+    
+    const userBadgeId = userBadgesResponse.data[0].Id;
+    
+    const params = {
+      RecordIds: [userBadgeId]
+    };
+    
+    const response = await apperClient.deleteRecord('user_badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return true;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error revoking badge:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error revoking badge:", error.message);
+      throw error;
+    }
   }
-  
-  userBadgesData.splice(index, 1);
-  return true;
 };
 
 export const resetMonthlyBadges = async () => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const monthlyBadgeIds = badgesData
-    .filter(b => b.resetCycle === 'monthly')
-    .map(b => b.Id);
-  
-  const initialCount = userBadgesData.length;
-  
-  for (let i = userBadgesData.length - 1; i >= 0; i--) {
-    if (monthlyBadgeIds.includes(userBadgesData[i].badgeId)) {
-      userBadgesData.splice(i, 1);
+  try {
+    // Get all monthly badges
+    const badgesParams = {
+      fields: [
+        { field: { Name: "Id" } }
+      ],
+      where: [
+        {
+          FieldName: "resetCycle",
+          Operator: "EqualTo",
+          Values: ["monthly"]
+        }
+      ]
+    };
+    
+    const badgesResponse = await apperClient.fetchRecords('badge', badgesParams);
+    
+    if (!badgesResponse.success) {
+      throw new Error(badgesResponse.message);
+    }
+    
+    const monthlyBadgeIds = (badgesResponse.data || []).map(badge => badge.Id);
+    
+    if (monthlyBadgeIds.length === 0) {
+      return { resetCount: 0 };
+    }
+    
+    // Get all user badges for monthly badges
+    const userBadgesParams = {
+      fields: [
+        { field: { Name: "Id" } }
+      ],
+      where: [
+        {
+          FieldName: "badgeId",
+          Operator: "ExactMatch",
+          Values: monthlyBadgeIds
+        }
+      ]
+    };
+    
+    const userBadgesResponse = await apperClient.fetchRecords('user_badge', userBadgesParams);
+    
+    if (!userBadgesResponse.success) {
+      throw new Error(userBadgesResponse.message);
+    }
+    
+    const userBadgeIds = (userBadgesResponse.data || []).map(ub => ub.Id);
+    
+    if (userBadgeIds.length === 0) {
+      return { resetCount: 0 };
+    }
+    
+    // Delete all monthly user badges
+    const params = {
+      RecordIds: userBadgeIds
+    };
+    
+    const response = await apperClient.deleteRecord('user_badge', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return { resetCount: userBadgeIds.length };
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error resetting monthly badges:", error?.response?.data?.message);
+      throw new Error(error?.response?.data?.message);
+    } else {
+      console.error("Error resetting monthly badges:", error.message);
+      throw error;
     }
   }
-  
-  const resetCount = initialCount - userBadgesData.length;
-  return { resetCount };
 };
