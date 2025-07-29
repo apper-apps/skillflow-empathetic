@@ -9,13 +9,18 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import ApperIcon from "@/components/ApperIcon";
-import { getCommunityPosts } from "@/services/api/communityService";
+import { getCommunityPosts, updatePost } from "@/services/api/communityService";
+import { getCommentsByPost, createComment, likeComment } from "@/services/api/commentService";
 
 const CommunityPage = () => {
-  const [posts, setPosts] = useState([]);
+const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [expandedComments, setExpandedComments] = useState({});
+  const [comments, setComments] = useState({});
+  const [commentText, setCommentText] = useState({});
+  const [commentLoading, setCommentLoading] = useState({});
 
   const categories = ["All", "질문", "성공사례", "팁공유", "자유게시판"];
 
@@ -57,11 +62,99 @@ const CommunityPage = () => {
         ? { ...post, likes: post.likes + 1, isLiked: !post.isLiked }
         : post
     ));
-    toast.success("좋아요를 눌렀습니다!");
+toast.success("좋아요를 눌렀습니다!");
   };
 
-  const handleReply = (postId) => {
-    toast.info("댓글 기능은 준비 중입니다.");
+  const handleReply = async (postId) => {
+    if (expandedComments[postId]) {
+      setExpandedComments(prev => ({ ...prev, [postId]: false }));
+      return;
+    }
+
+    setExpandedComments(prev => ({ ...prev, [postId]: true }));
+    await loadComments(postId);
+  };
+
+  const loadComments = async (postId) => {
+    if (comments[postId]) return; // Already loaded
+    
+    setCommentLoading(prev => ({ ...prev, [postId]: true }));
+    try {
+      const postComments = await getCommentsByPost(postId);
+      setComments(prev => ({ ...prev, [postId]: postComments }));
+    } catch (error) {
+      toast.error("댓글을 불러오는데 실패했습니다.");
+      console.error("Error loading comments:", error);
+    } finally {
+      setCommentLoading(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleCommentSubmit = async (postId) => {
+    const text = commentText[postId]?.trim();
+    if (!text) {
+      toast.error("댓글 내용을 입력해주세요.");
+      return;
+    }
+
+    setCommentLoading(prev => ({ ...prev, [postId]: true }));
+    try {
+      const newComment = await createComment({
+        content: text,
+        author: "사용자", // TODO: Replace with actual user info
+        postId: postId
+      });
+
+      if (newComment) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: [newComment, ...(prev[postId] || [])]
+        }));
+        setCommentText(prev => ({ ...prev, [postId]: "" }));
+        
+        // Update post replies count
+        setPosts(prev => prev.map(post => 
+          post.Id === postId 
+            ? { ...post, replies: post.replies + 1 }
+            : post
+        ));
+        
+        // Update post replies count in database
+        try {
+          const currentPost = posts.find(p => p.Id === postId);
+          if (currentPost) {
+            await updatePost(postId, { replies: currentPost.replies + 1 });
+          }
+        } catch (error) {
+          console.error("Error updating post replies count:", error);
+        }
+        
+        toast.success("댓글이 작성되었습니다!");
+      }
+    } catch (error) {
+      toast.error("댓글 작성에 실패했습니다.");
+      console.error("Error creating comment:", error);
+    } finally {
+      setCommentLoading(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleCommentLike = async (commentId, postId) => {
+    try {
+      const updatedComment = await likeComment(commentId);
+      if (updatedComment) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: prev[postId].map(comment => 
+            comment.Id === commentId ? updatedComment : comment
+          )
+        }));
+        toast.success("댓글 좋아요!");
+      }
+    } catch (error) {
+      toast.error("좋아요 처리에 실패했습니다.");
+      console.error("Error liking comment:", error);
+    }
   };
 
   if (loading) return <Loading type="list" count={5} />;
@@ -172,7 +265,7 @@ const CommunityPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-              <Card className="border-0 shadow-card hover:shadow-elevated transition-all duration-200 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+<Card className="border-0 shadow-card hover:shadow-elevated transition-all duration-200 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0">
@@ -203,7 +296,7 @@ const CommunityPage = () => {
                         {post.content}
                       </p>
                       
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-4">
                           <Button
                             variant="ghost"
@@ -219,7 +312,7 @@ const CommunityPage = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleReply(post.Id)}
-                            className="flex items-center gap-2 text-gray-600 dark:text-gray-400"
+                            className={`flex items-center gap-2 ${expandedComments[post.Id] ? 'text-primary' : 'text-gray-600 dark:text-gray-400'}`}
                           >
                             <ApperIcon name="MessageSquare" className="w-4 h-4" />
                             {post.replies}
@@ -239,6 +332,92 @@ const CommunityPage = () => {
                           <ApperIcon name="Share2" className="w-4 h-4" />
                         </Button>
                       </div>
+
+                      {/* Comments Section */}
+                      {expandedComments[post.Id] && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                          {/* Comment Form */}
+                          <div className="mb-4">
+                            <div className="flex gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-r from-accent to-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                                <ApperIcon name="User" className="w-4 h-4 text-gray-900" />
+                              </div>
+                              <div className="flex-1">
+                                <Input
+                                  placeholder="댓글을 작성하세요..."
+                                  value={commentText[post.Id] || ""}
+                                  onChange={(e) => setCommentText(prev => ({ ...prev, [post.Id]: e.target.value }))}
+                                  className="mb-2"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleCommentSubmit(post.Id);
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleCommentSubmit(post.Id)}
+                                  disabled={commentLoading[post.Id] || !commentText[post.Id]?.trim()}
+                                  className="w-full sm:w-auto"
+                                >
+                                  {commentLoading[post.Id] ? (
+                                    <>
+                                      <ApperIcon name="Loader2" className="w-4 h-4 mr-2 animate-spin" />
+                                      작성 중...
+                                    </>
+                                  ) : (
+                                    "댓글 작성"
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Comments List */}
+                          <div className="space-y-3">
+                            {commentLoading[post.Id] && !comments[post.Id] ? (
+                              <div className="flex justify-center py-4">
+                                <ApperIcon name="Loader2" className="w-5 h-5 animate-spin text-gray-400" />
+                              </div>
+                            ) : comments[post.Id] && comments[post.Id].length > 0 ? (
+                              comments[post.Id].map((comment) => (
+                                <div key={comment.Id} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                  <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                                    <ApperIcon name="User" className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {comment.author?.Name || comment.author}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        {new Date(comment.createdAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                                      {comment.content}
+                                    </p>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleCommentLike(comment.Id, post.Id)}
+                                      className={`text-xs flex items-center gap-1 ${comment.isLiked ? 'text-red-500' : 'text-gray-500'}`}
+                                    >
+                                      <ApperIcon name="Heart" className={`w-3 h-3 ${comment.isLiked ? 'fill-current' : ''}`} />
+                                      {comment.likes}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">
+                                첫 번째 댓글을 작성해보세요!
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
