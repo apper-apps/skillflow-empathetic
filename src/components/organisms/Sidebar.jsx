@@ -20,11 +20,17 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: "BookOpen",
       description: "전체 강의 목록"
     },
-    {
+{
       label: "Community",
       path: "/community",
       icon: "Users",
       description: "커뮤니티 및 소통"
+    },
+    {
+      label: "Admin",
+      path: "/admin",
+      icon: "Settings",
+      description: "강의 및 영상 관리"
     }
   ];
 
