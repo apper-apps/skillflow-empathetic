@@ -15,6 +15,7 @@ import Layout from "@/components/organisms/Layout";
 import CommunityPage from "@/components/pages/CommunityPage";
 import DashboardPage from "@/components/pages/DashboardPage";
 import CoursesPage from "@/components/pages/CoursesPage";
+import AdminPage from "@/components/pages/AdminPage";
 import LandingPage from "@/components/pages/LandingPage";
 
 // Create auth context
@@ -137,8 +138,13 @@ function AppContent() {
             </Layout>
           } />
           <Route path="/courses" element={
-            <Layout>
+<Layout>
               <CoursesPage />
+            </Layout>
+          } />
+          <Route path="/admin" element={
+            <Layout>
+              <AdminPage />
             </Layout>
           } />
           <Route path="/community" element={
