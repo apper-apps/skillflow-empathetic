@@ -164,7 +164,16 @@ const loadDashboardData = async () => {
                                daysAgo < 30 ? `${Math.floor(daysAgo / 7)}주일 전` : 
                                `${Math.floor(daysAgo / 30)}개월 전`;
 
-                const getBadgeColors = (badgeName) => {
+const getBadgeColors = (badgeName) => {
+                  // Safety check for undefined/null badge names
+                  if (!badgeName || typeof badgeName !== 'string') {
+                    return {
+                      bg: 'from-accent/10 to-yellow-400/10',
+                      border: 'border-accent/20',
+                      icon: 'from-accent to-yellow-400'
+                    };
+                  }
+                  
                   if (badgeName.includes('마스터') || badgeName.includes('완벽')) {
                     return {
                       bg: 'from-success/10 to-green-600/10',
