@@ -96,7 +96,7 @@ const handleLike = async (postId) => {
     }
   };
 
-  const handleCommentSubmit = async (postId) => {
+const handleCommentSubmit = async (postId) => {
     const text = commentText[postId]?.trim();
     if (!text) {
       toast.error("댓글 내용을 입력해주세요.");
@@ -107,7 +107,7 @@ const handleLike = async (postId) => {
     try {
       const newComment = await createComment({
         content: text,
-        author: "사용자", // TODO: Replace with actual user info
+        author: 1, // TODO: Replace with actual authenticated user ID
         postId: postId
       });
 
