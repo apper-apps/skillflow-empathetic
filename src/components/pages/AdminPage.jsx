@@ -600,26 +600,6 @@ const patterns = [
   };
 
   // Enhanced reset form
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      videoUrl: "",
-      videoId: "",
-      requiredRole: "Free_User",
-      duration: 0,
-      category: "",
-      level: "초급",
-      videoEmbedCode: "",
-      influencerAdvantages: "",
-      buttonDestinationLink: ""
-    });
-    setEditingCourse(null);
-    setEditingDashboardItem(null);
-    setEditingLandingPage(null);
-    setIsCreating(false);
-    setPreviewVideoId("");
-  };
 
   const handleDelete = async (course) => {
     if (!confirm(`"${course.title}" 강의를 정말 삭제하시겠습니까?`)) {
@@ -930,9 +910,9 @@ const patterns = [
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <ApperIcon name="Trash2" className="w-4 h-4" />
-                      </Button>
+</Button>
                     </div>
-</div>
+                  </div>
                 </motion.div>
               ))}
             </div>
