@@ -11,7 +11,7 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import ApperIcon from "@/components/ApperIcon";
-import { getAllCourses } from "@/services/api/courseService";
+import { getAllCourses, getSeriesProgress, getCourseById } from "@/services/api/courseService";
 
 const CoursesPage = () => {
   const [courses, setCourses] = useState([]);
@@ -19,9 +19,10 @@ const CoursesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCourse, setSelectedCourse] = useState(null);
-
+  const [completedLessons, setCompletedLessons] = useState([]);
+  const [seriesProgress, setSeriesProgress] = useState({});
   const categories = ["All", "강점 찾기", "콘셉트 설계", "글 시나리오", "수익화 실행"];
   const loadCourses = async () => {
     try {
@@ -59,11 +60,46 @@ useEffect(() => {
     setFilteredCourses(filtered);
   }, [courses, selectedCategory, searchTerm]);
 
-  const handleCourseStart = (course) => {
+const handleCourseStart = async (course) => {
     setSelectedCourse(course);
+    
+    // Load series progress if available
+    if (course.category) {
+      try {
+        const progress = await getSeriesProgress(course.category, completedLessons);
+        setSeriesProgress(prev => ({ ...prev, [course.category]: progress }));
+      } catch (error) {
+        console.error("Failed to load series progress:", error);
+      }
+    }
+    
     toast.success(`"${course.title}" 강의를 시작합니다!`);
   };
 
+  const handleLessonComplete = (course) => {
+    if (!completedLessons.includes(course.Id)) {
+      const newCompleted = [...completedLessons, course.Id];
+      setCompletedLessons(newCompleted);
+      
+      // Update series progress
+      if (course.category) {
+        getSeriesProgress(course.category, newCompleted).then(progress => {
+          setSeriesProgress(prev => ({ ...prev, [course.category]: progress }));
+        });
+      }
+      
+      toast.success("수업을 완료했습니다! 🎉");
+    }
+  };
+
+  const handleNavigateToLesson = async (lesson) => {
+    try {
+      const courseData = await getCourseById(lesson.Id);
+      setSelectedCourse(courseData);
+    } catch (error) {
+      toast.error("수업을 불러오는데 실패했습니다.");
+    }
+  };
 const handleCategoryFilter = (category) => {
     setSelectedCategory(category);
   };
@@ -113,9 +149,14 @@ const handleCategoryFilter = (category) => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <VideoPlayer
+<VideoPlayer
             videoId={selectedCourse.videoId}
             title={selectedCourse.title}
+            course={selectedCourse}
+            onLessonComplete={handleLessonComplete}
+            onNavigateToLesson={handleNavigateToLesson}
+            autoPlayNext={true}
+            showSeriesProgress={true}
             className="mb-8"
           />
         </motion.div>
@@ -153,16 +194,26 @@ const handleCategoryFilter = (category) => {
               ))}
             </div>
 
-            {/* Stats and Filters */}
+{/* Stats and Filters */}
             <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <ApperIcon name="BookOpen" className="w-4 h-4" />
                 <span>총 {filteredCourses.length}개 강의</span>
               </div>
               
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <ApperIcon name="CheckCircle" className="w-4 h-4 text-success" />
+                <span>완료 {completedLessons.length}개</span>
+              </div>
+              
               {selectedCategory !== "All" && (
                 <Badge variant="default">
-                  {selectedCategory} 카테고리
+                  {selectedCategory} 시리즈
+                  {seriesProgress[selectedCategory] && (
+                    <span className="ml-1">
+                      ({seriesProgress[selectedCategory].progressPercentage}%)
+                    </span>
+                  )}
                 </Badge>
               )}
               

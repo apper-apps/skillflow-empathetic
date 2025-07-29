@@ -70,15 +70,33 @@ const CourseCard = ({
           </div>
         </CardContent>
         
-        <CardFooter className="p-6 pt-0">
-          <Button
-            onClick={() => onStart?.(course)}
-            variant="primary"
-            className="w-full hover-glow"
-          >
-            <ApperIcon name="Play" className="w-4 h-4 mr-2" />
-            수업 시작
-          </Button>
+<CardFooter className="p-6 pt-0">
+          <div className="space-y-3">
+            {/* Series Progress (if applicable) */}
+            {course.category && (
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between mb-1">
+                  <span>{course.category} 시리즈</span>
+                  <span>수업 진행률</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                  <div 
+                    className="bg-gradient-to-r from-primary to-secondary h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.random() * 60 + 20}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            
+            <Button
+              onClick={() => onStart?.(course)}
+              variant="primary"
+              className="w-full hover-glow"
+            >
+              <ApperIcon name="Play" className="w-4 h-4 mr-2" />
+              다음 수업
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </motion.div>

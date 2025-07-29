@@ -67,8 +67,73 @@ export const deleteCourse = async (id) => {
     throw new Error("Course not found");
   }
   
-  const deletedCourse = { ...coursesData[courseIndex] };
+const deletedCourse = { ...coursesData[courseIndex] };
   coursesData.splice(courseIndex, 1);
   
   return deletedCourse;
+};
+
+// Series navigation functions
+export const getNextLesson = async (currentCourseId, category) => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  const currentCourse = coursesData.find(course => course.Id === parseInt(currentCourseId));
+  if (!currentCourse) return null;
+  
+  // Get courses in the same category, sorted by Id
+  const seriesCourses = coursesData
+    .filter(course => course.category === category)
+    .sort((a, b) => a.Id - b.Id);
+  
+  const currentIndex = seriesCourses.findIndex(course => course.Id === parseInt(currentCourseId));
+  const nextCourse = seriesCourses[currentIndex + 1];
+  
+  return nextCourse ? { ...nextCourse } : null;
+};
+
+export const getPreviousLesson = async (currentCourseId, category) => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  const currentCourse = coursesData.find(course => course.Id === parseInt(currentCourseId));
+  if (!currentCourse) return null;
+  
+  // Get courses in the same category, sorted by Id
+  const seriesCourses = coursesData
+    .filter(course => course.category === category)
+    .sort((a, b) => a.Id - b.Id);
+  
+  const currentIndex = seriesCourses.findIndex(course => course.Id === parseInt(currentCourseId));
+  const previousCourse = seriesCourses[currentIndex - 1];
+  
+  return previousCourse ? { ...previousCourse } : null;
+};
+
+export const getSeriesProgress = async (category, completedLessonIds = []) => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  const seriesCourses = coursesData
+    .filter(course => course.category === category)
+    .sort((a, b) => a.Id - b.Id);
+  
+  const totalLessons = seriesCourses.length;
+  const completedLessons = completedLessonIds.length;
+  const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  
+  return {
+    category,
+    totalLessons,
+    completedLessons,
+    progressPercentage,
+    nextLesson: seriesCourses.find(course => !completedLessonIds.includes(course.Id)),
+    courses: seriesCourses
+  };
+};
+
+export const getCoursesBySeries = async (category) => {
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  return coursesData
+    .filter(course => course.category === category)
+    .sort((a, b) => a.Id - b.Id)
+    .map(course => ({ ...course }));
 };
