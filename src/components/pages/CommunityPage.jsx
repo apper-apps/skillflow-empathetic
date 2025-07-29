@@ -1,19 +1,18 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import Input from "@/components/atoms/Input";
+import { createComment, getCommentsByPost, likeComment } from "@/services/api/commentService";
+import { createPost, getCommunityPosts, likePost, updatePost } from "@/services/api/communityService";
+import ApperIcon from "@/components/ApperIcon";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import { getCommunityPosts, updatePost, likePost } from "@/services/api/communityService";
-import { getCommentsByPost, createComment, likeComment } from "@/services/api/commentService";
-
+import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
 const CommunityPage = () => {
-const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -21,8 +20,70 @@ const [posts, setPosts] = useState([]);
   const [comments, setComments] = useState({});
   const [commentText, setCommentText] = useState({});
   const [commentLoading, setCommentLoading] = useState({});
+  
+  // New post creation states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    category: "질문"
+  });
+  const [createLoading, setCreateLoading] = useState(false);
 
   const categories = ["All", "질문", "성공사례", "팁공유", "자유게시판"];
+  const createCategories = ["질문", "성공사례", "팁공유", "자유게시판"];
+
+  const handleCreatePost = async () => {
+    if (!newPost.title.trim()) {
+      toast.error("제목을 입력해주세요.");
+      return;
+    }
+    if (!newPost.content.trim()) {
+      toast.error("내용을 입력해주세요.");
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      const postData = {
+        title: newPost.title.trim(),
+        content: newPost.content.trim(),
+        author: "현재 사용자", // TODO: Replace with actual authenticated user name
+        category: newPost.category
+      };
+
+      const createdPost = await createPost(postData);
+      
+      if (createdPost) {
+        toast.success("게시글이 작성되었습니다!");
+        setShowCreateModal(false);
+        setNewPost({ title: "", content: "", category: "질문" });
+        await loadCommunityPosts(); // Refresh the posts list
+      }
+    } catch (error) {
+      console.error("Error creating post:", error.message);
+      toast.error("게시글 작성에 실패했습니다.");
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setNewPost({ title: "", content: "", category: "질문" });
+  };
+
+  // Close modal on escape key
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && showCreateModal) {
+        handleCloseModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [showCreateModal]);
 
   const loadCommunityPosts = async () => {
     try {
@@ -161,7 +222,108 @@ const handleCommentSubmit = async (postId) => {
       toast.error("좋아요 처리에 실패했습니다.");
       console.error("Error liking comment:", error);
     }
-  };
+};
+
+  // Create Post Modal
+  const CreatePostModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">새 글 작성</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCloseModal}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <ApperIcon name="X" className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          {/* Category Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              카테고리
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {createCategories.map((category) => (
+                <Button
+                  key={category}
+                  variant={newPost.category === category ? "primary" : "ghost"}
+                  size="sm"
+                  onClick={() => setNewPost(prev => ({ ...prev, category }))}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Title Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              제목
+            </label>
+            <Input
+              placeholder="게시글 제목을 입력하세요..."
+              value={newPost.title}
+              onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full"
+            />
+          </div>
+
+          {/* Content Textarea */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              내용
+            </label>
+            <textarea
+              placeholder="내용을 작성하세요..."
+              value={newPost.content}
+              onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
+              rows={8}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-vertical"
+            />
+          </div>
+        </div>
+
+        {/* Modal Actions */}
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <Button
+            variant="ghost"
+            onClick={handleCloseModal}
+            disabled={createLoading}
+          >
+            취소
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleCreatePost}
+            disabled={createLoading || !newPost.title.trim() || !newPost.content.trim()}
+            className="hover-glow"
+          >
+            {createLoading ? (
+              <>
+                <ApperIcon name="Loader2" className="w-4 h-4 mr-2 animate-spin" />
+                게시 중...
+              </>
+            ) : (
+              <>
+                <ApperIcon name="Send" className="w-4 h-4 mr-2" />
+                게시하기
+              </>
+            )}
+          </Button>
+        </div>
+      </motion.div>
+</div>
+  );
 
   if (loading) return <Loading type="list" count={5} />;
   if (error) return <Error message={error} onRetry={loadCommunityPosts} />;
@@ -244,8 +406,11 @@ const handleCommentSubmit = async (postId) => {
                 </Button>
               ))}
             </div>
-            
-            <Button variant="primary" className="hover-glow">
+<Button 
+              variant="primary" 
+              className="hover-glow"
+              onClick={() => setShowCreateModal(true)}
+            >
               <ApperIcon name="Plus" className="w-4 h-4 mr-2" />
               새 글 작성
             </Button>
@@ -257,10 +422,10 @@ const handleCommentSubmit = async (postId) => {
       {filteredPosts.length === 0 ? (
         <Empty 
           title="게시물이 없습니다"
-          description="첫 번째 게시물을 작성해보세요!"
+description="첫 번째 게시물을 작성해보세요!"
           iconName="MessageSquare"
           actionText="새 글 작성"
-          onAction={() => toast.info("글 작성 기능은 준비 중입니다.")}
+          onAction={() => setShowCreateModal(true)}
         />
       ) : (
         <div className="space-y-6">
@@ -271,7 +436,7 @@ const handleCommentSubmit = async (postId) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-<Card className="border-0 shadow-card hover:shadow-elevated transition-all duration-200 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+              <Card className="border-0 shadow-card hover:shadow-elevated transition-all duration-200 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center flex-shrink-0">
@@ -458,8 +623,11 @@ const handleCommentSubmit = async (postId) => {
               <p className="text-sm text-gray-600 dark:text-gray-400">156개 게시물</p>
             </div>
           </div>
-        </CardContent>
+</CardContent>
       </Card>
+
+      {/* Create Post Modal */}
+      {showCreateModal && <CreatePostModal />}
     </motion.div>
   );
 };
