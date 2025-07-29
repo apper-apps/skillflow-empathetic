@@ -6,7 +6,7 @@
     "requiredRole": "Free_User",
     "duration": 25,
     "videoId": "sample_video_1",
-    "category": "강점찾기",
+"category": "강점 찾기",
     "level": "초급",
     "students": 1234,
     "rating": 4.8
@@ -18,7 +18,7 @@
     "requiredRole": "Premium",
     "duration": 45,
     "videoId": "sample_video_2",
-    "category": "콘셉트설계",
+"category": "콘셉트 설계",
     "level": "중급",
     "students": 892,
     "rating": 4.9
@@ -30,7 +30,7 @@
     "requiredRole": "Premium",
     "duration": 55,
     "videoId": "sample_video_3",
-    "category": "글시나리오",
+"category": "글 시나리오",
     "level": "중급",
     "students": 756,
     "rating": 4.7
@@ -42,7 +42,7 @@
     "requiredRole": "Master",
     "duration": 65,
     "videoId": "sample_video_4",
-    "category": "수익화실행",
+"category": "수익화 실행",
     "level": "고급",
     "students": 423,
     "rating": 4.9
@@ -54,7 +54,7 @@
     "requiredRole": "Premium",
     "duration": 40,
     "videoId": "sample_video_5",
-    "category": "플랫폼활용",
+"category": "콘셉트 설계",
     "level": "중급",
     "students": 634,
     "rating": 4.6
@@ -66,7 +66,7 @@
     "requiredRole": "Master",
     "duration": 50,
     "videoId": "sample_video_6",
-    "category": "마케팅",
+"category": "수익화 실행",
     "level": "고급",
     "students": 298,
     "rating": 4.8
@@ -78,7 +78,7 @@
     "requiredRole": "Free_User",
     "duration": 30,
     "videoId": "sample_video_7",
-    "category": "글시나리오",
+"category": "글 시나리오",
     "level": "초급",
     "students": 1156,
     "rating": 4.7
@@ -90,7 +90,7 @@
     "requiredRole": "Master",
     "duration": 60,
     "videoId": "sample_video_8",
-    "category": "마케팅",
+"category": "수익화 실행",
     "level": "고급",
     "students": 187,
     "rating": 4.9
@@ -102,7 +102,7 @@
     "requiredRole": "Premium",
     "duration": 35,
     "videoId": "sample_video_9",
-    "category": "콘셉트설계",
+"category": "콘셉트 설계",
     "level": "중급",
     "students": 512,
     "rating": 4.8
@@ -114,7 +114,7 @@
     "requiredRole": "Premium",
     "duration": 42,
     "videoId": "sample_video_10",
-    "category": "플랫폼활용",
+"category": "콘셉트 설계",
     "level": "중급",
     "students": 789,
     "rating": 4.6
@@ -126,7 +126,7 @@
     "requiredRole": "Master",
     "duration": 70,
     "videoId": "sample_video_11",
-    "category": "수익화실행",
+"category": "수익화 실행",
     "level": "고급",
     "students": 156,
     "rating": 4.9
@@ -138,7 +138,7 @@
     "requiredRole": "Master",
     "duration": 55,
     "videoId": "sample_video_12",
-    "category": "수익화실행",
+"category": "수익화 실행",
     "level": "고급",
     "students": 234,
     "rating": 4.8

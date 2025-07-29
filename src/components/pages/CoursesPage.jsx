@@ -19,11 +19,10 @@ const CoursesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState("All");
+const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const roles = ["All", "Free_User", "Premium", "Master"];
-
+  const categories = ["All", "강점 찾기", "콘셉트 설계", "글 시나리오", "수익화 실행"];
   const loadCourses = async () => {
     try {
       setLoading(true);
@@ -43,11 +42,11 @@ const CoursesPage = () => {
     loadCourses();
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
     let filtered = courses;
 
-    if (selectedRole !== "All") {
-      filtered = filtered.filter(course => course.requiredRole === selectedRole);
+    if (selectedCategory !== "All") {
+      filtered = filtered.filter(course => course.category === selectedCategory);
     }
 
     if (searchTerm) {
@@ -58,17 +57,16 @@ const CoursesPage = () => {
     }
 
     setFilteredCourses(filtered);
-  }, [courses, selectedRole, searchTerm]);
+  }, [courses, selectedCategory, searchTerm]);
 
   const handleCourseStart = (course) => {
     setSelectedCourse(course);
     toast.success(`"${course.title}" 강의를 시작합니다!`);
   };
 
-  const handleRoleFilter = (role) => {
-    setSelectedRole(role);
+const handleCategoryFilter = (category) => {
+    setSelectedCategory(category);
   };
-
   const getRoleText = (role) => {
     switch (role) {
       case "Free_User": return "무료";
@@ -124,9 +122,10 @@ const CoursesPage = () => {
       )}
 
       {/* Filters */}
-      <Card className="border-0 shadow-card bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+<Card className="border-0 shadow-card bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="flex flex-col gap-6">
+            {/* Search Bar */}
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <ApperIcon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -139,38 +138,40 @@ const CoursesPage = () => {
               </div>
             </div>
             
+            {/* Category Tabs */}
             <div className="flex flex-wrap gap-2">
-              {roles.map((role) => (
+              {categories.map((category) => (
                 <Button
-                  key={role}
-                  variant={selectedRole === role ? getRoleBadgeVariant(role) : "ghost"}
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => handleRoleFilter(role)}
+                  onClick={() => handleCategoryFilter(category)}
                   className="transition-all duration-200"
                 >
-                  {getRoleText(role)}
+                  {category}
                 </Button>
               ))}
             </div>
-          </div>
 
-          <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <ApperIcon name="BookOpen" className="w-4 h-4" />
-              <span>총 {filteredCourses.length}개 강의</span>
+            {/* Stats and Filters */}
+            <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <ApperIcon name="BookOpen" className="w-4 h-4" />
+                <span>총 {filteredCourses.length}개 강의</span>
+              </div>
+              
+              {selectedCategory !== "All" && (
+                <Badge variant="default">
+                  {selectedCategory} 카테고리
+                </Badge>
+              )}
+              
+              {searchTerm && (
+                <Badge variant="outline">
+                  "{searchTerm}" 검색 결과
+                </Badge>
+              )}
             </div>
-            
-            {selectedRole !== "All" && (
-              <Badge variant={getRoleBadgeVariant(selectedRole)}>
-                {getRoleText(selectedRole)} 전용
-              </Badge>
-            )}
-            
-            {searchTerm && (
-              <Badge variant="outline">
-                "{searchTerm}" 검색 결과
-              </Badge>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -182,9 +183,9 @@ const CoursesPage = () => {
           description="검색 조건을 변경하거나 필터를 재설정해보세요."
           iconName="BookOpen"
           actionText="전체 강의 보기"
-          onAction={() => {
+onAction={() => {
             setSearchTerm("");
-            setSelectedRole("All");
+            setSelectedCategory("All");
           }}
         />
       ) : (
