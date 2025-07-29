@@ -1,22 +1,21 @@
-import "@/index.css";
 import React, { createContext, useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useNavigate, Navigate } from "react-router-dom";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { ToastContainer } from "react-toastify";
-import AdminPage from "@/components/pages/AdminPage";
-import Layout from "@/components/organisms/Layout";
-import DashboardPage from "@/components/pages/DashboardPage";
-import CommunityPage from "@/components/pages/CommunityPage";
+import { store } from "@/store/store";
+import { clearUser, setUser } from "@/store/userSlice";
 import Login from "@/components/pages/Login";
-import PromptPassword from "@/components/pages/PromptPassword";
-import CoursesPage from "@/components/pages/CoursesPage";
-import ResetPassword from "@/components/pages/ResetPassword";
+import Signup from "@/components/pages/Signup";
 import Callback from "@/components/pages/Callback";
 import ErrorPage from "@/components/pages/ErrorPage";
-import Signup from "@/components/pages/Signup";
+import ResetPassword from "@/components/pages/ResetPassword";
+import PromptPassword from "@/components/pages/PromptPassword";
+import "@/index.css";
+import Layout from "@/components/organisms/Layout";
+import CommunityPage from "@/components/pages/CommunityPage";
+import DashboardPage from "@/components/pages/DashboardPage";
+import CoursesPage from "@/components/pages/CoursesPage";
 import LandingPage from "@/components/pages/LandingPage";
-import { clearUser, setUser } from "@/store/userSlice";
-import { store } from "@/store/store";
 
 // Create auth context
 export const AuthContext = createContext(null);
@@ -132,7 +131,7 @@ function AppContent() {
           <Route path="/prompt-password/:appId/:emailAddress/:provider" element={<PromptPassword />} />
           <Route path="/reset-password/:appId/:fields" element={<ResetPassword />} />
           <Route path="/landing" element={<LandingPage />} />
-<Route path="/dashboard" element={
+          <Route path="/dashboard" element={
             <Layout>
               <DashboardPage />
             </Layout>
@@ -145,11 +144,6 @@ function AppContent() {
           <Route path="/community" element={
             <Layout>
               <CommunityPage />
-            </Layout>
-          } />
-          <Route path="/admin" element={
-            <Layout>
-              <AdminPage />
             </Layout>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
