@@ -9,7 +9,7 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import ApperIcon from "@/components/ApperIcon";
-import { getCommunityPosts, updatePost } from "@/services/api/communityService";
+import { getCommunityPosts, updatePost, likePost } from "@/services/api/communityService";
 import { getCommentsByPost, createComment, likeComment } from "@/services/api/commentService";
 
 const CommunityPage = () => {
@@ -56,13 +56,19 @@ const [posts, setPosts] = useState([]);
     }
   };
 
-  const handleLike = (postId) => {
-    setPosts(posts.map(post => 
-      post.Id === postId 
-        ? { ...post, likes: post.likes + 1, isLiked: !post.isLiked }
-        : post
-    ));
-toast.success("좋아요를 눌렀습니다!");
+const handleLike = async (postId) => {
+    try {
+      const updatedPost = await likePost(postId);
+      if (updatedPost) {
+        setPosts(posts.map(post => 
+          post.Id === postId ? updatedPost : post
+        ));
+        toast.success(updatedPost.isLiked ? "좋아요를 눌렀습니다!" : "좋아요를 취소했습니다!");
+      }
+    } catch (error) {
+      console.error("Error liking post:", error.message);
+      toast.error("좋아요 처리 중 오류가 발생했습니다.");
+    }
   };
 
   const handleReply = async (postId) => {
