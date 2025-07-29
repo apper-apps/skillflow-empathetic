@@ -955,10 +955,49 @@ className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 <li>Landing pages support full embed codes for advanced customization</li>
               </ul>
             </div>
+</div>
+        </CardContent>
+      </Card>
+
+      {/* Help Section */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <ApperIcon name="HelpCircle" size={20} />
+            How to Use Video Embed Management
+          </h2>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4 text-sm text-gray-600">
+            <div>
+              <h3 className="font-medium text-gray-900 mb-2">Video URL Formats Supported:</h3>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>YouTube: https://www.youtube.com/watch?v=VIDEO_ID</li>
+                <li>YouTube Short: https://youtu.be/VIDEO_ID</li>
+                <li>Vimeo: https://vimeo.com/VIDEO_ID</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 mb-2">Entity Types:</h3>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li><strong>Dashboard Items:</strong> Content shown on user dashboard with video support</li>
+                <li><strong>Courses:</strong> Educational content with video lessons</li>
+                <li><strong>Landing Pages:</strong> Marketing pages with embedded videos and call-to-action buttons</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 mb-2">Tips:</h3>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>Video preview will automatically update when you paste a valid video URL</li>
+                <li>Required Role determines who can access the content</li>
+                <li>Duration should be specified in minutes for better user experience</li>
+                <li>Landing pages support full embed codes for advanced customization</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 };
 
