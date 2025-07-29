@@ -5,6 +5,274 @@ const apperClient = new ApperClient({
   apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
 });
 
+// Dashboard Items Service Methods (placeholder - requires dashboardService.js)
+export const getAllDashboardItems = async () => {
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "videoId" } },
+        { field: { Name: "requiredRole" } },
+        { field: { Name: "duration" } },
+        { field: { Name: "category" } }
+      ],
+      orderBy: [{ fieldName: "CreatedOn", sorttype: "DESC" }]
+    };
+
+    const response = await apperClient.fetchRecords('dashboard_item', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching dashboard items:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const createDashboardItem = async (itemData) => {
+  try {
+    const params = {
+      records: [itemData]
+    };
+
+    const response = await apperClient.createRecord('dashboard_item', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to create dashboard items ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return response.results.filter(result => result.success)[0]?.data;
+    }
+  } catch (error) {
+    console.error("Error creating dashboard item:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const updateDashboardItem = async (id, itemData) => {
+  try {
+    const params = {
+      records: [{ Id: id, ...itemData }]
+    };
+
+    const response = await apperClient.updateRecord('dashboard_item', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to update dashboard items ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return response.results.filter(result => result.success)[0]?.data;
+    }
+  } catch (error) {
+    console.error("Error updating dashboard item:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const deleteDashboardItem = async (id) => {
+  try {
+    const params = {
+      RecordIds: [id]
+    };
+
+    const response = await apperClient.deleteRecord('dashboard_item', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to delete dashboard items ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return response.results.filter(result => result.success).length > 0;
+    }
+  } catch (error) {
+    console.error("Error deleting dashboard item:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+// Landing Pages Service Methods (placeholder - requires landingPageService.js)
+export const getAllLandingPages = async () => {
+  try {
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "title" } },
+        { field: { Name: "description" } },
+        { field: { Name: "videoEmbedCode" } },
+        { field: { Name: "influencerAdvantages" } },
+        { field: { Name: "buttonDestinationLink" } }
+      ],
+      orderBy: [{ fieldName: "CreatedOn", sorttype: "DESC" }]
+    };
+
+    const response = await apperClient.fetchRecords('landing_page', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching landing pages:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const createLandingPage = async (pageData) => {
+  try {
+    const params = {
+      records: [pageData]
+    };
+
+    const response = await apperClient.createRecord('landing_page', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to create landing pages ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return response.results.filter(result => result.success)[0]?.data;
+    }
+  } catch (error) {
+    console.error("Error creating landing page:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const updateLandingPage = async (id, pageData) => {
+  try {
+    const params = {
+      records: [{ Id: id, ...pageData }]
+    };
+
+    const response = await apperClient.updateRecord('landing_page', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to update landing pages ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return response.results.filter(result => result.success)[0]?.data;
+    }
+  } catch (error) {
+    console.error("Error updating landing page:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const deleteLandingPage = async (id) => {
+  try {
+    const params = {
+      RecordIds: [id]
+    };
+
+    const response = await apperClient.deleteRecord('landing_page', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to delete landing pages ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return response.results.filter(result => result.success).length > 0;
+    }
+  } catch (error) {
+    console.error("Error deleting landing page:", error?.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+const apperClient = new ApperClient({
+  apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+  apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+});
+
 export const getAllCourses = async () => {
   try {
     const params = {
