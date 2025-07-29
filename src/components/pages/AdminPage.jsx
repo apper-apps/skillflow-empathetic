@@ -667,7 +667,7 @@ const patterns = [
       </div>
 
       {/* Course Form */}
-      {(isCreating || editingCourse) && (
+{(isCreating || editingCourse) && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -907,10 +907,10 @@ const patterns = [
                         onClick={() => handleDelete(course)}
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <ApperIcon name="Trash2" className="w-4 h-4" />
-</Button>
+                      </Button>
                     </div>
                   </div>
                 </motion.div>
