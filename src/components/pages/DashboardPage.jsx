@@ -1,41 +1,43 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import ProgressCard from "@/components/molecules/ProgressCard";
+import { getDashboardData, getDashboardWithBadges } from "@/services/api/dashboardService";
+import ApperIcon from "@/components/ApperIcon";
 import CourseCard from "@/components/molecules/CourseCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
+import ProgressCard from "@/components/molecules/ProgressCard";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import { getDashboardData } from "@/services/api/dashboardService";
-
+import Button from "@/components/atoms/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
 const DashboardPage = () => {
-  const [dashboardData, setDashboardData] = useState([]);
+const [dashboardData, setDashboardData] = useState([]);
+  const [userBadges, setUserBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await getDashboardData();
-      setDashboardData(data);
-    } catch (err) {
-      setError("대시보드 데이터를 불러오는데 실패했습니다.");
-      toast.error("데이터 로딩 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
+useEffect(() => {
     loadDashboardData();
   }, []);
 
   const handleCourseStart = (course) => {
     toast.success(`"${course.title}" 강의를 시작합니다!`);
+  };
+const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getDashboardWithBadges();
+      setDashboardData(data.dashboardItems);
+      setUserBadges(data.userBadges);
+      toast.success('대시보드 데이터를 성공적으로 불러왔습니다.');
+    } catch (error) {
+      console.error('Dashboard data loading failed:', error);
+      setError(error.message || '대시보드 데이터를 불러오는데 실패했습니다.');
+      toast.error('대시보드 데이터 로드에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) return <Loading type="cards" count={6} />;
@@ -143,7 +145,7 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Achievements */}
+{/* Recent Achievements */}
         <Card className="border-0 shadow-card bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -152,35 +154,59 @@ const DashboardPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-success/10 to-green-600/10 rounded-lg border border-success/20">
-              <div className="w-10 h-10 bg-gradient-to-r from-success to-green-600 rounded-full flex items-center justify-center">
-                <ApperIcon name="Award" className="w-5 h-5 text-white" />
+            {userBadges.length > 0 ? (
+              userBadges.slice(0, 3).map((userBadge, index) => {
+                const earnedDate = new Date(userBadge.earnedAt);
+                const daysAgo = Math.floor((new Date() - earnedDate) / (1000 * 60 * 60 * 24));
+                const timeAgo = daysAgo === 0 ? '오늘' : 
+                               daysAgo === 1 ? '어제' : 
+                               daysAgo < 7 ? `${daysAgo}일 전` : 
+                               daysAgo < 30 ? `${Math.floor(daysAgo / 7)}주일 전` : 
+                               `${Math.floor(daysAgo / 30)}개월 전`;
+
+                const getBadgeColors = (badgeName) => {
+                  if (badgeName.includes('마스터') || badgeName.includes('완벽')) {
+                    return {
+                      bg: 'from-success/10 to-green-600/10',
+                      border: 'border-success/20',
+                      icon: 'from-success to-green-600'
+                    };
+                  } else if (badgeName.includes('목표') || badgeName.includes('월간')) {
+                    return {
+                      bg: 'from-primary/10 to-secondary/10',
+                      border: 'border-primary/20',
+                      icon: 'from-primary to-secondary'
+                    };
+                  } else {
+                    return {
+                      bg: 'from-accent/10 to-yellow-400/10',
+                      border: 'border-accent/20',
+                      icon: 'from-accent to-yellow-400'
+                    };
+                  }
+                };
+
+                const colors = getBadgeColors(userBadge.badge.name);
+
+                return (
+                  <div key={`${userBadge.userId}-${userBadge.badgeId}-${index}`} className={`flex items-center gap-4 p-3 bg-gradient-to-r ${colors.bg} rounded-lg border ${colors.border}`}>
+                    <div className={`w-10 h-10 bg-gradient-to-r ${colors.icon} rounded-full flex items-center justify-center`}>
+                      <ApperIcon name={userBadge.badge.icon} className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">{userBadge.badge.name} 배지 획득</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{timeAgo}</p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8">
+                <ApperIcon name="Award" className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 dark:text-gray-400">아직 획득한 배지가 없습니다</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">학습을 완료하고 첫 배지를 획득해보세요!</p>
               </div>
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">글쓰기 마스터 배지 획득</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">3일 전</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg border border-primary/20">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                <ApperIcon name="Target" className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">월 학습 목표 달성</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">1주일 전</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-accent/10 to-yellow-400/10 rounded-lg border border-accent/20">
-              <div className="w-10 h-10 bg-gradient-to-r from-accent to-yellow-400 rounded-full flex items-center justify-center">
-                <ApperIcon name="Star" className="w-5 h-5 text-gray-900" />
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">5점 만점 강의 완료</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">2주일 전</p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

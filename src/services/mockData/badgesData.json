@@ -1,0 +1,44 @@
+[
+  {
+    "Id": 1,
+    "name": "월간 4편 완료",
+    "icon": "Trophy",
+    "criteria": "videos>=4",
+    "resetCycle": "monthly"
+  },
+  {
+    "Id": 2,
+    "name": "강점 찾기 완료",
+    "icon": "Star",
+    "criteria": "category=strength && complete",
+    "resetCycle": "none"
+  },
+  {
+    "Id": 3,
+    "name": "글쓰기 마스터",
+    "icon": "Award",
+    "criteria": "writing_courses>=5 && score>=90",
+    "resetCycle": "none"
+  },
+  {
+    "Id": 4,
+    "name": "월 학습 목표 달성",
+    "icon": "Target",
+    "criteria": "monthly_hours>=20",
+    "resetCycle": "monthly"
+  },
+  {
+    "Id": 5,
+    "name": "연속 학습 7일",
+    "icon": "Flame",
+    "criteria": "daily_streak>=7",
+    "resetCycle": "none"
+  },
+  {
+    "Id": 6,
+    "name": "완벽한 점수",
+    "icon": "Star",
+    "criteria": "perfect_scores>=3",
+    "resetCycle": "none"
+  }
+]
