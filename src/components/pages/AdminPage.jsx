@@ -66,10 +66,10 @@ const AdminPage = () => {
     }
     
     // Extract from Adilo URL patterns
-    const patterns = [
-      /https?:\/\/video\.adilo\.com\/([^\/\?]+)/,
-      /https?:\/\/.*adilo.*\/([^\/\?]+)/,
-      /\/([^\/\?]+)$/
+const patterns = [
+      /https?:\/\/video\.adilo\.com\/([^/?]+)/,
+      /https?:\/\/.*adilo.*\/([^/?]+)/,
+      /\/([^/?]+)$/
     ];
     
     for (const pattern of patterns) {
